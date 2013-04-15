@@ -92,9 +92,9 @@ mycodegen = (tree) ->
 		#'ComprehensionBlock': ['left', 'right'], # Harmony
 		#'ComprehensionExpression': ['blocks', 'filter'], # Harmony
 		#'GeneratorExpression': ['blocks', 'filter'], # Harmony
-		#'LetExpression': ['head', 'body'], # Harmony, Special
+		#'LetExpression': ['head', 'body'], # Harmony
 		#'LetStatement': ['head', 'body'], # Harmony
-		#'ObjectPattern': ['properties'], # Harmony, Special
+		#'ObjectPattern': ['properties'], # Harmony
 		#'YieldExpression': ['argument'] # Harmony
 
 
@@ -381,6 +381,14 @@ mycodegen = (tree) ->
 			if init?
 				str.push ' = '
 				codegen init
+
+		, WithStatement: (object, body) ->
+			indent()
+			indentation++
+			str.push 'with ('
+			codegen object
+			str.push ') '
+			codegen body, inline: true
 
 		, WhileStatement: (test, body) ->
 			indent()
