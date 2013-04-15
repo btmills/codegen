@@ -1,10 +1,10 @@
-# JavaScript Scope Chain Visualization
+# JavaScript code generator
 
-Eventually, this project will be able to analyze JavaScript code and generate appropriate trace tables. In its current state, it serves to visualize JavaScript scope and the scope chain.
+Given a SpiderMonkey-compatible AST, generate human-readable and correctly formatted source code.
 
-[Demo link](http://btmills.github.com/trace)
+## Should I use it?
 
-When hovering over a scope, all green areas are visible in the current scope. Hovering over a variable highlights its declaration in the source code. Clicking on a scope creates a scope chain visualization at the top, which eliminates variables that are shadowed by variables in narrower scopes, showing only thoe visible from the clicked scope.
+No. Use [escodegen](https://github.com/Constellation/escodegen). This is just for fun and will not work as well.
 
 ## License
 

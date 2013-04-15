@@ -34,82 +34,10 @@ html, body {
 	font-family: 'Courier New', 'Courier', monospace;
 }
 
-.ace_selection {
-	background: #9d550f !important;
-}
-
-#chain {
-	.box-sizing();
-
+#output, {
 	margin: 0;
-	overflow: hidden;
 	padding: 10px;
-	background: #eee;
-	list-style-type: none;
-	border-bottom: 1px solid #aaa;
-	//position: fixed;
-	width: 100%;
-}
-
-#tree {
+	tab-size: 4;
 	overflow: scroll;
-	position: absolute;
-	top: 21px;
-	bottom: 0;
-	width: 100%;
-}
-
-.scope {
-	padding: 10px;
-	margin: 10px;
-	min-height: 10px;
-}
-
-#tree > .scope:first-child {
-	margin: 0;
-}
-
-.nested-0 {
-	background: #fff;
-}
-
-.nested-1 {
-	background: #eee;
-}
-
-.nested-2 {
-	background: #ddd;
-}
-
-.nested-3 {
-	background: #ccc;
-}
-
-.nested-4 {
-	background: #bbb;
-}
-
-.nested-5 {
-	background: #aaa;
-}
-
-.scope:hover {
-	background: #dfd;
-}
-
-.variables {
-	padding-left: 10px;
-	margin: 0 0 0 10px;
-	list-style-type: none;
-	overflow: hidden;
-}
-
-.variable {
-	float: left;
-	padding: 5px;
-	cursor: pointer;
-
-	&:hover {
-		background: #fdd;
-	}
+	white-space: pre;
 }
