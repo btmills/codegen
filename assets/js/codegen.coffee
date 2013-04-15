@@ -242,9 +242,10 @@ mycodegen = (tree) ->
 		, Identifier: (name) ->
 			str.push name
 
-		, IfStatement: (test, consequent, alternate) ->
-			indent()
-			indentation++
+		, IfStatement: (test, consequent, alternate, opts) ->
+			unless opts.inline
+				indent()
+				indentation++
 			str.push 'if ('
 			codegen test, indent
 			str.push ') '
@@ -252,7 +253,7 @@ mycodegen = (tree) ->
 			if alternate?
 				str.push ' else '
 				codegen alternate, inline: true
-			indentation--
+			indentation-- unless opts.inline
 
 		, LabeledStatement: (label, body) ->
 			throw 'LabeledStatement not supported.'
