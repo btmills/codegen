@@ -6,7 +6,11 @@ editor.getSession().setMode 'ace/mode/javascript'
 editor.setShowPrintMargin false
 editor.getSession().on 'change', (event) ->
 	try
-		$('#output').text mycodegen parse editor.getValue()
+		options =
+			format:
+				indent:
+					style: '\t'
+		$('#output').text generate parse(editor.getValue()), options
 	catch err
 		console.error err
 
@@ -16,10 +20,28 @@ parse = (code) ->
 		range: true
 		loc: true
 
-mycodegen = (tree) ->
-	str = []
-	indentation = 0
+generate = (tree, options) ->
+	options = $.extend true,
+		format:
+			indent:
+				style: '    '
+				base: 0
+			json: false
+			renumber: false
+			hexadecimal: false
+			quotes: 'single'
+			escapeless: false
+			compact: false
+			parentheses: true
+			semicolons: true
+		parse: null
+		comment: false
+		sourceMap: undefined
+	, options
+	console.dir options
 
+	str = []
+	indentation = options.format.indent.base
 
 	between = (els, fn, bw) ->
 		run = false
@@ -41,9 +63,11 @@ mycodegen = (tree) ->
 	###
 	indent = (delta, temp) ->
 		newline()
-		str.push ('\t' for i in [0...(indentation + (+delta || 0))]).join ''
+		str.push (options.format.indent.style for i in [0...(indentation + (+delta || 0))]).join ''
 		indentation += (+delta || 0) unless temp
 
+	semicolon = ->
+		str.push ';' if options.format.semicolons
 
 	syntax =
 		ArrayExpression: ['elements']
@@ -174,12 +198,12 @@ mycodegen = (tree) ->
 
 		, EmptyStatement: (opts) ->
 			indent() unless opts.inline
-			str.push ';'
+			semicolon()
 
 		, ExpressionStatement: (expression, opts) ->
 			indent() unless opts.inline
 			codegen expression
-			str.push ';'
+			semicolon()
 
 		, ForInStatement: (left, right, body, each) ->
 			indent()
@@ -313,7 +337,7 @@ mycodegen = (tree) ->
 			if argument?
 				str.push ' '
 				codegen argument
-			str.push ';'
+			semicolon()
 
 		, SequenceExpression: (expressions) ->
 			between expressions, codegen, ', '
@@ -344,7 +368,7 @@ mycodegen = (tree) ->
 			indent() unless opts.inline
 			str.push 'throw '
 			codegen argument
-			str.push ';'
+			semicolon()
 
 		, TryStatement: (block, handlers, guardedHandlers, finalizer) ->
 			throw 'TryStatement#guardedHandlers not supported.' if guardedHandlers.length
@@ -374,7 +398,7 @@ mycodegen = (tree) ->
 			str.push kind
 			str.push ' '
 			between declarations, codegen, ', '
-			str.push ';' unless opts.init
+			semicolon() unless opts.init
 
 		, VariableDeclarator: (id, init) ->
 			codegen id
@@ -419,4 +443,4 @@ mycodegen = (tree) ->
 		console.error err
 		return ''
 	console.log str
-	return str.slice(1).join('')
+	return str.slice(1).join('') # Slice off newline at beginning
