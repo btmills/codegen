@@ -10,7 +10,7 @@ editor.getSession().on 'change', (event) ->
 			format:
 				indent:
 					style: '\t'
-		$('#output').text Codegen.generate parse(editor.getValue()), options
+		$('#output').html Codegen.generate parse(editor.getValue()), options
 	catch err
 		console.error err
 
