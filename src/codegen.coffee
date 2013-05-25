@@ -61,7 +61,7 @@
 			str.push ';' if options.format.semicolons
 
 		region = (type, cont) ->
-			str.push "<span class=\"#{type}\">"
+			str.push "<span class=\"region #{type}\">"
 			cont()
 			str.push '</span>'
 
