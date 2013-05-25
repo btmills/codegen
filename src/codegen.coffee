@@ -45,7 +45,7 @@
 				fn el
 				run = true
 
-		newline = -> str.push '\n'
+		newline = -> str.push '<br />'
 
 		###
 		Indent a new line to the correct level
@@ -59,6 +59,11 @@
 
 		semicolon = ->
 			str.push ';' if options.format.semicolons
+
+		region = (type, cont) ->
+			str.push "<span class=#{type}>"
+			cont()
+			str.push '</span>'
 
 		syntax =
 			ArrayExpression: ['elements']
@@ -232,16 +237,17 @@
 				indentation--
 
 			, FunctionDeclaration: (id, params, defaults, rest, body) ->
-				throw 'FunctionDeclaration#defaults not supported.' if defaults.length
-				indent()
-				indentation++
-				str.push 'function '
-				codegen id
-				str.push '('
-				between params, codegen, ', '
-				str.push ') '
-				codegen body, inline: true
-				indentation--
+				region 'function-declaration', ->
+					throw 'FunctionDeclaration#defaults not supported.' if defaults.length
+					indent()
+					indentation++
+					str.push 'function '
+					codegen id
+					str.push '('
+					between params, codegen, ', '
+					str.push ') '
+					codegen body, inline: true
+					indentation--
 
 			, FunctionExpression: (id, params, defaults, rest, body) ->
 				throw 'FunctionExpression#defaults not supported.' if defaults.length
@@ -255,7 +261,8 @@
 				indentation--
 
 			, Identifier: (name) ->
-				str.push name
+				region 'identifier', ->
+					str.push name
 
 			, IfStatement: (test, consequent, alternate, opts) ->
 				unless opts.inline
@@ -385,11 +392,12 @@
 
 			# opts.init means declarations are part of loop initialization
 			, VariableDeclaration: (kind, declarations, opts) ->
-				indent() unless opts.init
-				str.push kind
-				str.push ' '
-				between declarations, codegen, ', '
-				semicolon() unless opts.init
+				region 'variable-declaration', ->
+					indent() unless opts.init
+					str.push kind
+					str.push ' '
+					between declarations, codegen, ', '
+					semicolon() unless opts.init
 
 			, VariableDeclarator: (id, init) ->
 				codegen id
