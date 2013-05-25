@@ -392,18 +392,18 @@
 
 			# opts.init means declarations are part of loop initialization
 			, VariableDeclaration: (kind, declarations, opts) ->
-				region 'variable-declaration', ->
-					indent() unless opts.init
-					str.push kind
-					str.push ' '
-					between declarations, codegen, ', '
-					semicolon() unless opts.init
+				indent() unless opts.init
+				str.push kind
+				str.push ' '
+				between declarations, codegen, ', '
+				semicolon() unless opts.init
 
 			, VariableDeclarator: (id, init) ->
-				codegen id
-				if init?
-					str.push ' = '
-					codegen init
+				region 'variable-declarator', ->
+					codegen id
+					if init?
+						str.push ' = '
+						codegen init
 
 			, WithStatement: (object, body) ->
 				indent()
