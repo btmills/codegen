@@ -16,8 +16,10 @@ editor.getSession().on 'change', (event) ->
 
 
 parse = (code) ->
-	esprima.parse code,
+	ast = esprima.parse code,
 		range: true
 		loc: true
+	console.dir ast
+	return ast
 
 console.dir Codegen

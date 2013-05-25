@@ -31,10 +31,14 @@
   });
 
   parse = function(code) {
-    return esprima.parse(code, {
+    var ast;
+
+    ast = esprima.parse(code, {
       range: true,
       loc: true
     });
+    console.dir(ast);
+    return ast;
   };
 
   console.dir(Codegen);
