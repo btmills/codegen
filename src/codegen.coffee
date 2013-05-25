@@ -190,7 +190,7 @@
 				codegen body, inline: true
 				str.push ' while ('
 				codegen test
-				str.push ')';
+				str.push ')'
 
 			, EmptyStatement: (opts) ->
 				indent() unless opts.inline
