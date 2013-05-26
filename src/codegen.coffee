@@ -127,10 +127,13 @@
 					str.push keyword
 			literal: (raw) ->
 				# TODO: Type of literals
-				region 'literal', ->
-					str.push raw
-			newline: ->
-				str.push if options.format.html then '<br />' else '\n'
+				str.push raw
+			newline: (->
+				first = true # suppress the first newline as it is extraneous
+				->
+					if first then first = false else
+					str.push if options.format.html then '<br />' else '\n'
+				)()
 			operator: (operator) ->
 				region 'operator', ->
 					str.push operator
@@ -538,13 +541,7 @@
 			return
 
 
-		#try
-		#	codegen tree
-		#catch err
-		#	console.error err
-		#	return ''
-		#console.log str
 		codegen tree
-		return str.slice(1).join('') # Slice off newline at beginning
+		return str.join('')
 
 	return generate: generate
