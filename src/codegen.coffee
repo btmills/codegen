@@ -126,6 +126,7 @@
 				region 'keyword', ->
 					str.push keyword
 			literal: (raw) ->
+				# TODO: Type of literals
 				region 'literal', ->
 					str.push raw
 			newline: ->
@@ -299,21 +300,20 @@
 				indentation--
 
 			FunctionDeclaration: (id, params, defaults, rest, body) ->
-				region 'function-declaration', ->
-					throw 'FunctionDeclaration#defaults not supported.' if defaults.length
-					indent()
-					indentation++
-					terminals.keyword 'function'
+				throw 'FunctionDeclaration#defaults not supported.' if defaults.length
+				indent()
+				indentation++
+				terminals.keyword 'function'
+				terminals.space()
+				codegen id
+				terminals.punctuation '('
+				between params, codegen, ->
+					terminals.punctuation ','
 					terminals.space()
-					codegen id
-					terminals.punctuation '('
-					between params, codegen, ->
-						terminals.punctuation ','
-						terminals.space()
-					terminals.punctuation ')'
-					terminals.space()
-					codegen body, inline: true
-					indentation--
+				terminals.punctuation ')'
+				terminals.space()
+				codegen body, inline: true
+				indentation--
 
 			FunctionExpression: (id, params, defaults, rest, body) ->
 				throw 'FunctionExpression#defaults not supported.' if defaults.length
@@ -331,8 +331,7 @@
 				indentation--
 
 			Identifier: (name) ->
-				region 'identifier', ->
-					str.push name
+				str.push name
 
 			IfStatement: (test, consequent, alternate, opts) ->
 				unless opts.inline
@@ -356,7 +355,6 @@
 				throw 'LabeledStatement not supported.'
 
 			Literal: (raw) ->
-				# TODO: Type of literals
 				terminals.literal raw
 
 			LogicalExpression: (left, operator, right) ->
@@ -492,13 +490,12 @@
 				semicolon() unless opts.init
 
 			VariableDeclarator: (id, init) ->
-				region 'variable-declarator', ->
-					codegen id
-					if init?
-						terminals.space()
-						terminals.operator '='
-						terminals.space()
-						codegen init
+				codegen id
+				if init?
+					terminals.space()
+					terminals.operator '='
+					terminals.space()
+					codegen init
 
 			WithStatement: (object, body) ->
 				indent()
@@ -523,14 +520,18 @@
 				codegen body, inline: true
 				indentation--
 
-
+		# Convert a CamelCase type to a dash-case CSS class
+		cssify = (name) ->
+			name.replace(/\W+/g, '-')
+			    .replace(/([a-z\d])([A-Z])/g, '$1-$2')
+			    .toLowerCase()
 
 		codegen = (code, opts) ->
 			opts ?= {}
-			#console.log code
 
 			if generators[code.type]? and syntax[code.type]?
-				generators[code.type].apply null, (code[prop] for prop in syntax[code.type]).concat opts
+				region cssify(code.type), ->
+					generators[code.type].apply null, (code[prop] for prop in syntax[code.type]).concat opts
 			else
 				str.push '????'
 				console.error "Unknown type #{code.type}", code
