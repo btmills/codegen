@@ -125,6 +125,9 @@
 			keyword: (keyword) ->
 				region 'keyword', ->
 					str.push keyword
+			literal: (raw) ->
+				region 'literal', ->
+					str.push raw
 			newline: ->
 				str.push if options.html then '<br />' else '\n'
 			operator: (operator) ->
