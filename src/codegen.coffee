@@ -54,7 +54,7 @@
 		###
 		indent = (delta, temp) ->
 			terminals.newline()
-			if options.html
+			if options.format.html
 				for i in [0...(indentation + (+delta || 0))]
 					str.push '<span class="indent"></span>'
 			else
@@ -64,9 +64,9 @@
 
 
 		region = (type, content) ->
-			str.push "<span class=\"region #{type}\">" if options.html
+			str.push "<span class=\"region #{type}\">" if options.format.html
 			content()
-			str.push '</span>' if options.html
+			str.push '</span>' if options.format.html
 
 		syntax =
 			ArrayExpression: ['elements']
@@ -129,7 +129,7 @@
 				region 'literal', ->
 					str.push raw
 			newline: ->
-				str.push if options.html then '<br />' else '\n'
+				str.push if options.format.html then '<br />' else '\n'
 			operator: (operator) ->
 				region 'operator', ->
 					str.push operator
@@ -140,7 +140,7 @@
 				region 'punctuation', ->
 					str.push ';' if options.format.semicolons
 			space: ->
-				str.push if options.html then '&nbsp;' else ' '
+				str.push if options.format.html then '&nbsp;' else ' '
 
 
 		generators =
