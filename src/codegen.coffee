@@ -53,7 +53,7 @@
 		temp does not update indent level
 		###
 		indent = (delta, temp) ->
-			newline()
+			terminals.newline()
 			if options.html
 				for i in [0...(indentation + (+delta || 0))]
 					str.push '<span class="indent"></span>'
@@ -148,14 +148,14 @@
 					terminals.space()
 				terminals.punctuation ']'
 
-			, AssignmentExpression: (left, operator, right) ->
+			AssignmentExpression: (left, operator, right) ->
 				codegen left
 				terminals.space()
 				terminals.operator operator
 				terminals.space()
 				codegen right
 
-			, BinaryExpression: (left, operator, right) ->
+			BinaryExpression: (left, operator, right) ->
 				terminals.punctuation '(('
 				codegen left
 				terminals.punctuation ')'
@@ -170,20 +170,20 @@
 			Generate the code for a block statement
 			opts.inline suppresses newlines before and after
 			###
-			, BlockStatement: (body, opts) ->
+			BlockStatement: (body, opts) ->
 				indent -1, true unless opts.inline
 				terminals.punctuation '{'
 				codegen el for el in body
 				indent -1, true
 				terminals.punctuation '}'
 
-			, BreakStatement: (label, opts) ->
+			BreakStatement: (label, opts) ->
 				throw 'BreakStatement#label not supported.' if label?
 				indent() unless opts.inline
 				terminals.keyword 'break'
 				terminals.semicolon()
 
-			, CallExpression: (callee, _arguments) ->
+			CallExpression: (callee, _arguments) ->
 				terminals.punctuation '(' if callee.type == 'FunctionExpression'
 				codegen callee
 				terminals.punctuation ')' if callee.type == 'FunctionExpression'
@@ -193,7 +193,7 @@
 					terminals.space()
 				terminals.punctuation ')'
 
-			, CatchClause: (param, guard, body) ->
+			CatchClause: (param, guard, body) ->
 				throw 'CatchClause#guard not supported.' if guard?
 				terminals.space()
 				terminals.keyword 'catch'
@@ -204,7 +204,7 @@
 				terminals.space()
 				codegen body, inline: true
 
-			, ConditionalExpression: (test, consequent, alternate) ->
+			ConditionalExpression: (test, consequent, alternate) ->
 				codegen test
 				terminals.space()
 				terminals.operator '?'
@@ -215,13 +215,13 @@
 				terminals.space()
 				codegen alternate
 
-			, ContinueStatement: (label, opts) ->
+			ContinueStatement: (label, opts) ->
 				throw 'ContinueStatement#label not supported.' if label?
 				indent() unless opts.inline
 				terminals.keyword 'continue'
 				terminals.semicolon()
 
-			, DoWhileStatement: (body, test) ->
+			DoWhileStatement: (body, test) ->
 				indent()
 				indentation++
 				terminals.keyword 'do '
@@ -233,16 +233,16 @@
 				codegen test
 				terminals.punctuation ')'
 
-			, EmptyStatement: (opts) ->
+			EmptyStatement: (opts) ->
 				indent() unless opts.inline
 				terminals.semicolon()
 
-			, ExpressionStatement: (expression, opts) ->
+			ExpressionStatement: (expression, opts) ->
 				indent() unless opts.inline
 				codegen expression
 				terminals.semicolon()
 
-			, ForInStatement: (left, right, body, each) ->
+			ForInStatement: (left, right, body, each) ->
 				indent()
 				terminals.keyword 'for'
 				terminals.space()
@@ -261,7 +261,7 @@
 				codegen body, inline: true
 				indentation--
 
-			, ForOfStatement: (left, right, body) ->
+			ForOfStatement: (left, right, body) ->
 				indent()
 				terminals.keyword 'for'
 				terminals.space()
@@ -277,7 +277,7 @@
 				codegen body, inline: true
 				indentation--
 
-			, ForStatement: (init, test, update, body) ->
+			ForStatement: (init, test, update, body) ->
 				indent()
 				terminals.keyword 'for'
 				terminals.space()
@@ -295,7 +295,7 @@
 				codegen body, inline: true
 				indentation--
 
-			, FunctionDeclaration: (id, params, defaults, rest, body) ->
+			FunctionDeclaration: (id, params, defaults, rest, body) ->
 				region 'function-declaration', ->
 					throw 'FunctionDeclaration#defaults not supported.' if defaults.length
 					indent()
@@ -312,7 +312,7 @@
 					codegen body, inline: true
 					indentation--
 
-			, FunctionExpression: (id, params, defaults, rest, body) ->
+			FunctionExpression: (id, params, defaults, rest, body) ->
 				throw 'FunctionExpression#defaults not supported.' if defaults.length
 				indentation++
 				terminals.keyword 'function'
@@ -327,11 +327,11 @@
 				codegen body, inline: true
 				indentation--
 
-			, Identifier: (name) ->
+			Identifier: (name) ->
 				region 'identifier', ->
 					str.push name
 
-			, IfStatement: (test, consequent, alternate, opts) ->
+			IfStatement: (test, consequent, alternate, opts) ->
 				unless opts.inline
 					indent()
 					indentation++
@@ -349,14 +349,14 @@
 					codegen alternate, inline: true
 				indentation-- unless opts.inline
 
-			, LabeledStatement: (label, body) ->
+			LabeledStatement: (label, body) ->
 				throw 'LabeledStatement not supported.'
 
-			, Literal: (raw) ->
+			Literal: (raw) ->
 				# TODO: Type of literals
 				terminals.literal raw
 
-			, LogicalExpression: (left, operator, right) ->
+			LogicalExpression: (left, operator, right) ->
 				terminals.punctuation '(('
 				codegen left
 				terminals.punctuation ')'
@@ -367,7 +367,7 @@
 				codegen right
 				terminals.punctuation '))'
 
-			, MemberExpression: (object, property, computed) ->
+			MemberExpression: (object, property, computed) ->
 				terminals.punctuation '(' if object.type == 'FunctionExpression'
 				codegen object
 				terminals.punctuation ')' if object.type == 'FunctionExpression'
@@ -379,7 +379,7 @@
 					terminals.punctuation '.'
 					codegen property
 
-			, NewExpression: (callee, _arguments) ->
+			NewExpression: (callee, _arguments) ->
 				terminals.keyword 'new'
 				terminals.space()
 				codegen callee
@@ -389,7 +389,7 @@
 					terminals.space()
 				terminals.punctuation ')'
 
-			, ObjectExpression: (properties) ->
+			ObjectExpression: (properties) ->
 				terminals.punctuation '{'
 				if properties?.length
 					indentation++
@@ -398,17 +398,17 @@
 					indent()
 				terminals.punctuation '}'
 
-			, Program: (body) ->
+			Program: (body) ->
 				codegen el for el in body
 
-			, Property: (key, value) ->
+			Property: (key, value) ->
 				indent()
 				codegen key
 				terminals.punctuation ':'
 				terminals.space()
 				codegen value
 
-			, ReturnStatement: (argument, opts) ->
+			ReturnStatement: (argument, opts) ->
 				indent() unless opts.inline
 				terminals.keyword 'return'
 				if argument?
@@ -416,12 +416,12 @@
 					codegen argument
 				terminals.semicolon()
 
-			, SequenceExpression: (expressions) ->
+			SequenceExpression: (expressions) ->
 				between expressions, codegen, ->
 					terminals.punctuation ','
 					terminals.space()
 
-			, SwitchCase: (test, consequent) ->
+			SwitchCase: (test, consequent) ->
 				indent -1, true
 				if test == null
 					terminals.keyword 'default'
@@ -432,7 +432,7 @@
 				terminals.punctuation ':'
 				codegen cons for cons in consequent
 
-			, SwitchStatement: (discriminant, cases) ->
+			SwitchStatement: (discriminant, cases) ->
 				indent()
 				terminals.keyword 'switch'
 				terminals.space()
@@ -445,17 +445,17 @@
 				codegen _case for _case in cases
 				indentation--
 
-			, ThisExpression: ->
+			ThisExpression: ->
 				terminals.keyword 'this'
 
-			, ThrowStatement: (argument, opts) ->
+			ThrowStatement: (argument, opts) ->
 				indent() unless opts.inline
 				terminals.keyword 'throw'
 				terminals.space()
 				codegen argument
 				semicolon()
 
-			, TryStatement: (block, handlers, guardedHandlers, finalizer) ->
+			TryStatement: (block, handlers, guardedHandlers, finalizer) ->
 				throw 'TryStatement#guardedHandlers not supported.' if guardedHandlers.length
 				indent()
 				indentation++
@@ -466,20 +466,20 @@
 				codegen finalizer if finalizer
 				indentation--
 
-			, UnaryExpression: (operator, argument) ->
+			UnaryExpression: (operator, argument) ->
 				terminals.punctuation '('
 				terminals.operator operator
 				terminals.punctuation '('
 				codegen argument
 				terminals.punctuation '))'
 
-			, UpdateExpression: (operator, argument, prefix) ->
+			UpdateExpression: (operator, argument, prefix) ->
 				terminals.operator operator if prefix
 				codegen argument, indent
 				terminals.operator operator unless prefix
 
 			# opts.init means declarations are part of loop initialization
-			, VariableDeclaration: (kind, declarations, opts) ->
+			VariableDeclaration: (kind, declarations, opts) ->
 				indent() unless opts.init
 				terminals.keyword kind
 				terminals.space()
@@ -488,7 +488,7 @@
 					terminals.space()
 				semicolon() unless opts.init
 
-			, VariableDeclarator: (id, init) ->
+			VariableDeclarator: (id, init) ->
 				region 'variable-declarator', ->
 					codegen id
 					if init?
@@ -497,7 +497,7 @@
 						terminals.space()
 						codegen init
 
-			, WithStatement: (object, body) ->
+			WithStatement: (object, body) ->
 				indent()
 				indentation++
 				terminals.keyword 'with'
@@ -508,7 +508,7 @@
 				terminals.space()
 				codegen body, inline: true
 
-			, WhileStatement: (test, body) ->
+			WhileStatement: (test, body) ->
 				indent()
 				indentation++
 				terminals.keyword 'while'
@@ -534,12 +534,12 @@
 			return
 
 
-		try
+		#try
 			codegen tree
-		catch err
-			console.error err
-			return ''
-		console.log str
+		#catch err
+		#	console.error err
+		#	return ''
+		#console.log str
 		return str.slice(1).join('') # Slice off newline at beginning
 
 	return generate: generate
