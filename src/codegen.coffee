@@ -492,7 +492,7 @@
 				between declarations, codegen, ->
 					terminals.punctuation ','
 					terminals.space()
-				semicolon() unless opts.init
+				terminals.semicolon() unless opts.init
 
 			VariableDeclarator: (id, init) ->
 				codegen id
