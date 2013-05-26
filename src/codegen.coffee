@@ -367,7 +367,7 @@
 				codegen left
 				terminals.punctuation ')'
 				terminals.space()
-				str.push operator
+				terminals.operator operator
 				terminals.space()
 				terminals.punctuation '('
 				codegen right
@@ -459,7 +459,7 @@
 				terminals.keyword 'throw'
 				terminals.space()
 				codegen argument
-				semicolon()
+				terminals.semicolon()
 
 			TryStatement: (block, handlers, guardedHandlers, finalizer) ->
 				throw 'TryStatement#guardedHandlers not supported.' if guardedHandlers.length
