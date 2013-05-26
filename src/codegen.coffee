@@ -131,8 +131,10 @@
 			newline: (->
 				first = true # suppress the first newline as it is extraneous
 				->
-					if first then first = false else
-					str.push if options.format.html then '<br />' else '\n'
+					if first
+						first = false
+					else
+						str.push if options.format.html then '<br />' else '\n'
 				)()
 			operator: (operator) ->
 				region 'operator', ->
