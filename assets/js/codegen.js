@@ -13,7 +13,7 @@
     var generate;
 
     generate = function(tree, options) {
-      var between, codegen, err, generators, indent, indentation, newline, region, semicolon, str, syntax;
+      var between, codegen, cssify, generators, indent, indentation, region, str, syntax, terminals;
 
       options = $.extend(true, {
         format: {
@@ -21,6 +21,7 @@
             style: '    ',
             base: 0
           },
+          html: false,
           semicolons: true
         }
       }, options);
@@ -46,9 +47,6 @@
         }
         return _results;
       };
-      newline = function() {
-        return str.push('<br />');
-      };
       /*
       		Indent a new line to the correct level
       		delta increases or decreases indentation level
@@ -56,31 +54,36 @@
       */
 
       indent = function(delta, temp) {
-        var i;
+        var i, _i, _ref;
 
-        newline();
-        str.push(((function() {
-          var _i, _ref, _results;
-
-          _results = [];
+        terminals.newline();
+        if (options.format.html) {
           for (i = _i = 0, _ref = indentation + (+delta || 0); 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-            _results.push(options.format.indent.style);
+            str.push('<span class="indent"></span>');
           }
-          return _results;
-        })()).join(''));
+        } else {
+          str.push(((function() {
+            var _j, _ref1, _results;
+
+            _results = [];
+            for (i = _j = 0, _ref1 = indentation + (+delta || 0); 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
+              _results.push(options.format.indent.style);
+            }
+            return _results;
+          })()).join(''));
+        }
         if (!temp) {
           return indentation += +delta || 0;
         }
       };
-      semicolon = function() {
-        if (options.format.semicolons) {
-          return str.push(';');
+      region = function(type, content) {
+        if (options.format.html) {
+          str.push("<span class=\"region " + type + "\">");
         }
-      };
-      region = function(type, cont) {
-        str.push("<span class=\"" + type + "\">");
-        cont();
-        return str.push('</span>');
+        content();
+        if (options.format.html) {
+          return str.push('</span>');
+        }
       };
       syntax = {
         ArrayExpression: ['elements'],
@@ -126,27 +129,74 @@
         WhileStatement: ['test', 'body'],
         WithStatement: ['object', 'body']
       };
+      terminals = {
+        keyword: function(keyword) {
+          return region('keyword', function() {
+            return str.push(keyword);
+          });
+        },
+        literal: function(raw) {
+          return str.push(raw);
+        },
+        newline: (function() {
+          var first;
+
+          first = true;
+          return function() {
+            if (first) {
+              return first = false;
+            } else {
+              return str.push(options.format.html ? '<br />' : '\n');
+            }
+          };
+        })(),
+        operator: function(operator) {
+          return region('operator', function() {
+            return str.push(operator);
+          });
+        },
+        punctuation: function(symbol) {
+          return region('punctuation', function() {
+            return str.push(symbol);
+          });
+        },
+        semicolon: function() {
+          return region('punctuation', function() {
+            if (options.format.semicolons) {
+              return str.push(';');
+            }
+          });
+        },
+        space: function() {
+          return str.push(options.format.html ? '&nbsp;' : ' ');
+        }
+      };
       generators = {
         ArrayExpression: function(elements) {
-          str.push('[');
-          between(elements, codegen, ', ');
-          return str.push(']');
+          terminals.punctuation('[');
+          between(elements, codegen, function() {
+            terminals.punctuation(',');
+            return terminals.space();
+          });
+          return terminals.punctuation(']');
         },
         AssignmentExpression: function(left, operator, right) {
           codegen(left);
-          str.push(' ');
-          str.push(operator);
-          str.push(' ');
+          terminals.space();
+          terminals.operator(operator);
+          terminals.space();
           return codegen(right);
         },
         BinaryExpression: function(left, operator, right) {
-          str.push('((');
+          terminals.punctuation('((');
           codegen(left);
-          str.push(') ');
-          str.push(operator);
-          str.push(' (');
+          terminals.punctuation(')');
+          terminals.space();
+          terminals.operator(operator);
+          terminals.space();
+          terminals.punctuation('(');
           codegen(right);
-          return str.push('))');
+          return terminals.punctuation('))');
         },
         /*
         			Generate the code for a block statement
@@ -159,13 +209,13 @@
           if (!opts.inline) {
             indent(-1, true);
           }
-          str.push('{');
+          terminals.punctuation('{');
           for (_i = 0, _len = body.length; _i < _len; _i++) {
             el = body[_i];
             codegen(el);
           }
           indent(-1, true);
-          return str.push('}');
+          return terminals.punctuation('}');
         },
         BreakStatement: function(label, opts) {
           if (label != null) {
@@ -174,36 +224,48 @@
           if (!opts.inline) {
             indent();
           }
-          return str.push('break;');
+          terminals.keyword('break');
+          return terminals.semicolon();
         },
         CallExpression: function(callee, _arguments) {
           if (callee.type === 'FunctionExpression') {
-            str.push('(');
+            terminals.punctuation('(');
           }
           codegen(callee);
           if (callee.type === 'FunctionExpression') {
-            str.push(')');
+            terminals.punctuation(')');
           }
-          str.push('(');
-          between(_arguments, codegen, ', ');
-          return str.push(')');
+          terminals.punctuation('(');
+          between(_arguments, codegen, function() {
+            terminals.punctuation(',');
+            return terminals.space();
+          });
+          return terminals.punctuation(')');
         },
         CatchClause: function(param, guard, body) {
           if (guard != null) {
             throw 'CatchClause#guard not supported.';
           }
-          str.push(' catch (');
+          terminals.space();
+          terminals.keyword('catch');
+          terminals.space();
+          terminals.punctuation('(');
           codegen(param);
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           return codegen(body, {
             inline: true
           });
         },
         ConditionalExpression: function(test, consequent, alternate) {
           codegen(test);
-          str.push(' ? ');
+          terminals.space();
+          terminals.operator('?');
+          terminals.space();
           codegen(consequent);
-          str.push(' : ');
+          terminals.space();
+          terminals.operator(':');
+          terminals.space();
           return codegen(alternate);
         },
         ContinueStatement: function(label, opts) {
@@ -213,42 +275,55 @@
           if (!opts.inline) {
             indent();
           }
-          return str.push('continue;');
+          terminals.keyword('continue');
+          return terminals.semicolon();
         },
         DoWhileStatement: function(body, test) {
           indent();
           indentation++;
-          str.push('do ');
+          terminals.keyword('do ');
           codegen(body, {
             inline: true
           });
-          str.push(' while (');
+          terminals.space();
+          terminals.keyword('while');
+          terminals.space();
+          terminals.punctuation('(');
           codegen(test);
-          return str.push(')');
+          return terminals.punctuation(')');
         },
         EmptyStatement: function(opts) {
           if (!opts.inline) {
             indent();
           }
-          return semicolon();
+          return terminals.semicolon();
         },
         ExpressionStatement: function(expression, opts) {
           if (!opts.inline) {
             indent();
           }
           codegen(expression);
-          return semicolon();
+          return terminals.semicolon();
         },
         ForInStatement: function(left, right, body, each) {
           indent();
-          str.push(each ? 'for each (' : 'for (');
+          terminals.keyword('for');
+          terminals.space();
+          if (each) {
+            terminals.keyword('each');
+            terminals.space();
+          }
+          terminals.punctuation('(');
           indentation++;
           codegen(left, {
             init: true
           });
-          str.push(' in ');
+          terminals.space();
+          terminals.keyword('in');
+          terminals.space();
           codegen(right);
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           codegen(body, {
             inline: true
           });
@@ -256,14 +331,19 @@
         },
         ForOfStatement: function(left, right, body) {
           indent();
-          str.push('for (');
+          terminals.keyword('for');
+          terminals.space();
+          terminals.punctuation('(');
           indentation++;
           codegen(left, {
             init: true
           });
-          str.push(' of ');
+          terminals.space();
+          terminals.keyword('of');
+          terminals.space();
           codegen(right);
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           codegen(body, {
             inline: true
           });
@@ -271,80 +351,96 @@
         },
         ForStatement: function(init, test, update, body) {
           indent();
-          str.push('for (');
+          terminals.keyword('for');
+          terminals.space();
+          terminals.punctuation('(');
           indentation++;
           if (init) {
             codegen(init, {
               init: true
             });
           }
-          str.push('; ');
+          terminals.punctuation(';');
+          terminals.space();
           if (test) {
             codegen(test);
           }
-          str.push('; ');
+          terminals.punctuation(';');
+          terminals.space();
           if (update) {
             codegen(update);
           }
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           codegen(body, {
             inline: true
           });
           return indentation--;
         },
         FunctionDeclaration: function(id, params, defaults, rest, body) {
-          return region('function-declaration', function() {
-            if (defaults.length) {
-              throw 'FunctionDeclaration#defaults not supported.';
-            }
-            indent();
-            indentation++;
-            str.push('function ');
-            codegen(id);
-            str.push('(');
-            between(params, codegen, ', ');
-            str.push(') ');
-            codegen(body, {
-              inline: true
-            });
-            return indentation--;
+          if (defaults.length) {
+            throw 'FunctionDeclaration#defaults not supported.';
+          }
+          indent();
+          indentation++;
+          terminals.keyword('function');
+          terminals.space();
+          codegen(id);
+          terminals.punctuation('(');
+          between(params, codegen, function() {
+            terminals.punctuation(',');
+            return terminals.space();
           });
+          terminals.punctuation(')');
+          terminals.space();
+          codegen(body, {
+            inline: true
+          });
+          return indentation--;
         },
         FunctionExpression: function(id, params, defaults, rest, body) {
           if (defaults.length) {
             throw 'FunctionExpression#defaults not supported.';
           }
           indentation++;
-          str.push('function ');
+          terminals.keyword('function');
+          terminals.space();
           if (id != null) {
             codegen(id, indent);
           }
-          str.push('(');
-          between(params, codegen, ', ');
-          str.push(') ');
+          terminals.punctuation('(');
+          between(params, codegen, function() {
+            terminals.punctuation(',');
+            return terminals.space();
+          });
+          terminals.punctuation(')');
+          terminals.space();
           codegen(body, {
             inline: true
           });
           return indentation--;
         },
         Identifier: function(name) {
-          return region('identifier', function() {
-            return str.push(name);
-          });
+          return str.push(name);
         },
         IfStatement: function(test, consequent, alternate, opts) {
           if (!opts.inline) {
             indent();
             indentation++;
           }
-          str.push('if (');
+          terminals.keyword('if');
+          terminals.space();
+          terminals.punctuation('(');
           codegen(test, indent);
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           codegen(consequent, {
             inline: true
           });
           if (alternate != null) {
-            str.push(' else ');
+            terminals.space();
+            terminals.keyword('else');
+            terminals.space();
             codegen(alternate, {
               inline: true
             });
@@ -357,50 +453,58 @@
           throw 'LabeledStatement not supported.';
         },
         Literal: function(raw) {
-          return str.push(raw);
+          return terminals.literal(raw);
         },
         LogicalExpression: function(left, operator, right) {
-          str.push('((');
+          terminals.punctuation('((');
           codegen(left);
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           str.push(operator);
-          str.push(' (');
+          terminals.space();
+          terminals.punctuation('(');
           codegen(right);
-          return str.push('))');
+          return terminals.punctuation('))');
         },
         MemberExpression: function(object, property, computed) {
           if (object.type === 'FunctionExpression') {
-            str.push('(');
+            terminals.punctuation('(');
           }
           codegen(object);
           if (object.type === 'FunctionExpression') {
-            str.push(')');
+            terminals.punctuation(')');
           }
           if (computed) {
-            str.push('[');
+            terminals.punctuation('[');
             codegen(property);
-            return str.push(']');
+            return terminals.punctuation(']');
           } else {
-            str.push('.');
+            terminals.punctuation('.');
             return codegen(property);
           }
         },
         NewExpression: function(callee, _arguments) {
-          str.push('new ');
+          terminals.keyword('new');
+          terminals.space();
           codegen(callee);
-          str.push('(');
-          between(_arguments, codegen, ', ');
-          return str.push(')');
+          terminals.punctuation('(');
+          between(_arguments, codegen, function() {
+            terminals.punctuation(',');
+            return terminals.space();
+          });
+          return terminals.punctuation(')');
         },
         ObjectExpression: function(properties) {
-          str.push('{');
+          terminals.punctuation('{');
           if (properties != null ? properties.length : void 0) {
             indentation++;
-            between(properties, codegen, ',');
+            between(properties, codegen, function() {
+              return terminals.punctuation(',');
+            });
             indentation--;
             indent();
           }
-          return str.push('}');
+          return terminals.punctuation('}');
         },
         Program: function(body) {
           var el, _i, _len, _results;
@@ -415,34 +519,39 @@
         Property: function(key, value) {
           indent();
           codegen(key);
-          str.push(': ');
+          terminals.punctuation(':');
+          terminals.space();
           return codegen(value);
         },
         ReturnStatement: function(argument, opts) {
           if (!opts.inline) {
             indent();
           }
-          str.push('return');
+          terminals.keyword('return');
           if (argument != null) {
-            str.push(' ');
+            terminals.space();
             codegen(argument);
           }
-          return semicolon();
+          return terminals.semicolon();
         },
         SequenceExpression: function(expressions) {
-          return between(expressions, codegen, ', ');
+          return between(expressions, codegen, function() {
+            terminals.punctuation(',');
+            return terminals.space();
+          });
         },
         SwitchCase: function(test, consequent) {
           var cons, _i, _len, _results;
 
           indent(-1, true);
           if (test === null) {
-            str.push('default');
+            terminals.keyword('default');
           } else {
-            str.push('case ');
+            terminals.keyword('case');
+            terminals.space();
             codegen(test);
           }
-          str.push(':');
+          terminals.punctuation(':');
           _results = [];
           for (_i = 0, _len = consequent.length; _i < _len; _i++) {
             cons = consequent[_i];
@@ -454,9 +563,13 @@
           var _case, _i, _len;
 
           indent();
-          str.push('switch (');
+          terminals.keyword('switch');
+          terminals.space();
+          terminals.punctuation('(');
           codegen(discriminant);
-          str.push(') {');
+          terminals.punctuation(')');
+          terminals.space();
+          terminals.punctuation('{');
           indentation++;
           for (_i = 0, _len = cases.length; _i < _len; _i++) {
             _case = cases[_i];
@@ -465,13 +578,14 @@
           return indentation--;
         },
         ThisExpression: function() {
-          return str.push('this');
+          return terminals.keyword('this');
         },
         ThrowStatement: function(argument, opts) {
           if (!opts.inline) {
             indent();
           }
-          str.push('throw ');
+          terminals.keyword('throw');
+          terminals.space();
           codegen(argument);
           return semicolon();
         },
@@ -483,7 +597,8 @@
           }
           indent();
           indentation++;
-          str.push('try ');
+          terminals.keyword('try');
+          terminals.space();
           codegen(block, {
             inline: true
           });
@@ -497,47 +612,53 @@
           return indentation--;
         },
         UnaryExpression: function(operator, argument) {
-          str.push('(');
-          str.push(operator);
-          str.push('(');
+          terminals.punctuation('(');
+          terminals.operator(operator);
+          terminals.punctuation('(');
           codegen(argument);
-          return str.push('))');
+          return terminals.punctuation('))');
         },
         UpdateExpression: function(operator, argument, prefix) {
           if (prefix) {
-            str.push(operator);
+            terminals.operator(operator);
           }
           codegen(argument, indent);
           if (!prefix) {
-            return str.push(operator);
+            return terminals.operator(operator);
           }
         },
         VariableDeclaration: function(kind, declarations, opts) {
-          return region('variable-declaration', function() {
-            if (!opts.init) {
-              indent();
-            }
-            str.push(kind);
-            str.push(' ');
-            between(declarations, codegen, ', ');
-            if (!opts.init) {
-              return semicolon();
-            }
+          if (!opts.init) {
+            indent();
+          }
+          terminals.keyword(kind);
+          terminals.space();
+          between(declarations, codegen, function() {
+            terminals.punctuation(',');
+            return terminals.space();
           });
+          if (!opts.init) {
+            return semicolon();
+          }
         },
         VariableDeclarator: function(id, init) {
           codegen(id);
           if (init != null) {
-            str.push(' = ');
+            terminals.space();
+            terminals.operator('=');
+            terminals.space();
             return codegen(init);
           }
         },
         WithStatement: function(object, body) {
           indent();
           indentation++;
-          str.push('with (');
+          terminals.keyword('with');
+          terminals.space();
+          terminals.punctuation('(');
           codegen(object);
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           return codegen(body, {
             inline: true
           });
@@ -545,47 +666,48 @@
         WhileStatement: function(test, body) {
           indent();
           indentation++;
-          str.push('while (');
+          terminals.keyword('while');
+          terminals.space();
+          terminals.punctuation('(');
           codegen(test);
-          str.push(') ');
+          terminals.punctuation(')');
+          terminals.space();
           codegen(body, {
             inline: true
           });
           return indentation--;
         }
       };
+      cssify = function(name) {
+        return name.replace(/\W+/g, '-').replace(/([a-z\d])([A-Z])/g, '$1-$2').toLowerCase();
+      };
       codegen = function(code, opts) {
-        var prop;
-
         if (opts == null) {
           opts = {};
         }
         if ((generators[code.type] != null) && (syntax[code.type] != null)) {
-          generators[code.type].apply(null, ((function() {
-            var _i, _len, _ref, _results;
+          region(cssify(code.type), function() {
+            var prop;
 
-            _ref = syntax[code.type];
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              prop = _ref[_i];
-              _results.push(code[prop]);
-            }
-            return _results;
-          })()).concat(opts));
+            return generators[code.type].apply(null, ((function() {
+              var _i, _len, _ref, _results;
+
+              _ref = syntax[code.type];
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                prop = _ref[_i];
+                _results.push(code[prop]);
+              }
+              return _results;
+            })()).concat(opts));
+          });
         } else {
           str.push('????');
           console.error("Unknown type " + code.type, code);
         }
       };
-      try {
-        codegen(tree);
-      } catch (_error) {
-        err = _error;
-        console.error(err);
-        return '';
-      }
-      console.log(str);
-      return str.slice(1).join('');
+      codegen(tree);
+      return str.join('');
     };
     return {
       generate: generate
