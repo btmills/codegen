@@ -127,7 +127,7 @@
 					str.push keyword
 			newline: ->
 				str.push if options.html then '<br />' else '\n'
-			operator: (op) ->
+			operator: (operator) ->
 				region 'operator', ->
 					str.push operator
 			punctuation: (symbol) ->
@@ -535,11 +535,12 @@
 
 
 		#try
-			codegen tree
+		#	codegen tree
 		#catch err
 		#	console.error err
 		#	return ''
 		#console.log str
+		codegen tree
 		return str.slice(1).join('') # Slice off newline at beginning
 
 	return generate: generate
