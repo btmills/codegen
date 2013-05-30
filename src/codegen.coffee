@@ -11,37 +11,22 @@
 
 	'use strict'
 
-	# jQuery's extend
-	extend = ->
-		target = arguments[0] || {}
-		i = 1
-		length = arguments.length
-		deep = false
-		if typeof target == 'boolean'
-			deep = target
-			target = arguments[1] || {}
-			i = 2
-		if typeof target != 'object' and typeof target != 'function'
-			target = {}
-		for i in [i...length] by 1
-			if (options = arguments[i]) != null
-				for name of options
-					src = target[name]
-					copy = options[name]
-					continue if target == copy
-					if deep and copy and (typeof copy == 'object' or (copyIsArray = (typeof copy == 'array')))
-						if copyIsArray
-							copyIsArray = false
-							clone = src and if (typeof src == 'array') then src else []
-						else
-							clone = src and if (typeof src == 'object') then src else {}
-						target[name] = extend deep, clone, copy
-					else if copy != undefined
-						target [name] = copy
+	merge = (target) ->
+		sources = Array.prototype.slice.call arguments, 1
+		for source in sources
+			for prop of source
+				if target[prop] == source[prop]
+					continue
+				else if typeof source[prop] == 'object'
+					target[prop] ?= {}
+					merge target[prop], source[prop]
+				else if source[prop]?
+					target[prop] = source[prop]
 		return target
 
+
 	generate = (tree, options) ->
-		options = extend true,
+		options = merge
 			format:
 				indent:
 					style: '    '
