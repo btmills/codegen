@@ -10,12 +10,51 @@
     }
   })(this, function() {
     'use strict';
-    var generate;
+    var extend, generate;
 
+    extend = function() {
+      var clone, copy, copyIsArray, deep, i, length, name, options, src, target, _i;
+
+      target = arguments[0] || {};
+      i = 1;
+      length = arguments.length;
+      deep = false;
+      if (typeof target === 'boolean') {
+        deep = target;
+        target = arguments[1] || {};
+        i = 2;
+      }
+      if (typeof target !== 'object' && typeof target !== 'function') {
+        target = {};
+      }
+      for (i = _i = i; _i < length; i = _i += 1) {
+        if ((options = arguments[i]) !== null) {
+          for (name in options) {
+            src = target[name];
+            copy = options[name];
+            if (target === copy) {
+              continue;
+            }
+            if (deep && copy && (typeof copy === 'object' || (copyIsArray = typeof copy === 'array'))) {
+              if (copyIsArray) {
+                copyIsArray = false;
+                clone = src && (typeof src === 'array' ? src : []);
+              } else {
+                clone = src && (typeof src === 'object' ? src : {});
+              }
+              target[name] = extend(deep, clone, copy);
+            } else if (copy !== void 0) {
+              target((name = copy[0], copy));
+            }
+          }
+        }
+      }
+      return target;
+    };
     generate = function(tree, options) {
       var between, codegen, cssify, generators, indent, indentation, region, str, syntax, terminals;
 
-      options = $.extend(true, {
+      options = extend(true, {
         format: {
           indent: {
             style: '    ',
@@ -25,7 +64,6 @@
           semicolons: true
         }
       }, options);
-      console.dir(options);
       str = [];
       indentation = options.format.indent.base;
       between = function(els, fn, bw) {
@@ -386,6 +424,7 @@
           terminals.keyword('function');
           terminals.space();
           codegen(id);
+          terminals.space();
           terminals.punctuation('(');
           between(params, codegen, function() {
             terminals.punctuation(',');
@@ -460,7 +499,7 @@
           codegen(left);
           terminals.punctuation(')');
           terminals.space();
-          str.push(operator);
+          terminals.operator(operator);
           terminals.space();
           terminals.punctuation('(');
           codegen(right);
@@ -587,7 +626,7 @@
           terminals.keyword('throw');
           terminals.space();
           codegen(argument);
-          return semicolon();
+          return terminals.semicolon();
         },
         TryStatement: function(block, handlers, guardedHandlers, finalizer) {
           var handler, _i, _len;
@@ -638,7 +677,7 @@
             return terminals.space();
           });
           if (!opts.init) {
-            return semicolon();
+            return terminals.semicolon();
           }
         },
         VariableDeclarator: function(id, init) {
