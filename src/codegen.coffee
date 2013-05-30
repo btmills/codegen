@@ -11,8 +11,37 @@
 
 	'use strict'
 
+	# jQuery's extend
+	extend = ->
+		target = arguments[0] || {}
+		i = 1
+		length = arguments.length
+		deep = false
+		if typeof target == 'boolean'
+			deep = target
+			target = arguments[1] || {}
+			i = 2
+		if typeof target != 'object' and typeof target != 'function'
+			target = {}
+		for i in [i...length] by 1
+			if (options = arguments[i]) != null
+				for name of options
+					src = target[name]
+					copy = options[name]
+					continue if target == copy
+					if deep and copy and (typeof copy == 'object' or (copyIsArray = (typeof copy == 'array')))
+						if copyIsArray
+							copyIsArray = false
+							clone = src and if (typeof src == 'array') then src else []
+						else
+							clone = src and if (typeof src == 'object') then src else {}
+						target[name] = extend deep, clone, copy
+					else if copy != undefined
+						target [name] = copy
+		return target
+
 	generate = (tree, options) ->
-		options = $.extend true,
+		options = extend true,
 			format:
 				indent:
 					style: '    '
@@ -30,7 +59,6 @@
 			#comment: false
 			#sourceMap: undefined
 		, options
-		console.dir options
 
 		str = []
 		indentation = options.format.indent.base
@@ -311,6 +339,7 @@
 				terminals.keyword 'function'
 				terminals.space()
 				codegen id
+				terminals.space()
 				terminals.punctuation '('
 				between params, codegen, ->
 					terminals.punctuation ','
